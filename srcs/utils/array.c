@@ -1,4 +1,24 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   array.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ninieddu <ninieddu@student.42lyon.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/02/18 08:03:25 by jobenass          #+#    #+#             */
+/*   Updated: 2021/03/15 21:46:48 by ninieddu         ###   ########lyon.fr   */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../../incs/minishell.h"
+
+void	ft_doublestrdel(char **str1, char **str2)
+{
+	if (*str1)
+		ft_strdel(str1);
+	if (*str2)
+		ft_strdel(str2);
+}
 
 char	*ft_get_env(char **env, char *key)
 {
@@ -24,23 +44,21 @@ char	**ft_list_to_tab(t_list *list)
 	int		len;
 	int		i;
 
-	token = 0;
+	token = NULL;
 	len = ft_list_size(list);
 	if (!(token = malloc(sizeof(char *) * (len + 1))))
 		return (NULL);
-	i = 0;
-	while (i < len)
+	i = -1;
+	while (++i < len)
 	{
-		token[i] = ft_strdup(list->content);
-		if (!token[i])
+		if (!(token[i] = ft_strdup(list->content)))
 		{
 			ft_tabstrdel(&token);
 			return (NULL);
 		}
 		list = list->next;
-		i++;
 	}
-	token[i] = 0;
+	token[i] = NULL;
 	return (token);
 }
 

@@ -6,7 +6,7 @@
 /*   By: jobenass <jobenass@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/10/21 14:47:28 by jobenass          #+#    #+#             */
-/*   Updated: 2020/12/19 20:09:07 by jobenass         ###   ########lyon.fr   */
+/*   Updated: 2021/03/02 08:40:34 by jobenass         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,7 @@ char		*ft_strjoin_chr(char const *s1, int c, char const *s2, int d);
 char		*ft_strjoin_idx(char const *s1, char const *s2, int ind);
 char		**ft_split(char const *s, char c);
 char		**ft_split_charset(char const *s, char const *set);
-void 		ft_tabnbrdel(int ***tab, int size);
+void		ft_tabnbrdel(int ***tab, int size);
 int			ft_tabstrlen(char **tab);
 void		ft_tabstrclr(char **tab);
 void		ft_tabstrdel(char ***tab);

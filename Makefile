@@ -1,7 +1,7 @@
 NAME				=	minishell
 
 CC					=	gcc
-CFLAGS				=	-Wall -Wextra -Werror -g
+CFLAGS				=	-Wall -Wextra -Werror
 
 DIR_FT				=	srcs/libft/
 LIBS				=	-lft
@@ -14,42 +14,49 @@ VPATH				=	incs/ \
 						srcs/redirection \
 						srcs/builtins \
 						srcs/execution \
-						srcs/signaux \
+						srcs/signal \
 						srcs/utils
 
 INCS				=	minishell.h
 
 SRCS				=	minishell.c \
+						home.c \
+						variables.c \
 						manage.c \
 						lexer.c \
 						line.c \
 						subline.c \
 						token.c \
 						parser.c \
-						expand.c \
+						tilde.c \
 						edit.c \
 						conponent.c \
 						detect.c \
 						browse.c \
-						executer.c \
+						execute.c \
 						builtins.c \
 						command.c \
+						access.c \
 						binaries.c \
 						echo.c \
 						cd.c \
 						pwd.c \
 						export.c \
+						export_print.c \
 						unset.c \
 						env.c \
 						exit.c \
 						array.c \
-						is.c \
+						lexe.c \
+						parse.c \
+						type.c \
+						others.c \
 						list.c \
 						error.c \
-						set_ret.c\
-						signal.c\
-						signal_next.c\
-						crash.c
+						set_ret.c \
+						signal.c \
+						signal_next.c \
+						syntax.c
 
 OPATH				=	objs/
 
@@ -65,10 +72,9 @@ $(NAME)				:	$(OBJS)
 						$(MAKE) -C $(DIR_FT)
 						$(CC) $(CFLAGS) $(OBJS) -o $(NAME) -L$(DIR_FT) $(LIBS)
 
-# --trace-children=yes
-
 clean				:
 						$(RM) $(OBJS)
+						$(RM) -r minishell.dSYM
 						$(RM) -r $(OPATH)
 						$(MAKE) $@ -C $(DIR_FT)
 

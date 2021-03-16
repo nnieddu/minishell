@@ -1,100 +1,144 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-// 		███    ██  ██████  ████████ ███████ ███████ 
-// 		████   ██ ██    ██    ██    ██      ██      
-// 		██ ██  ██ ██    ██    ██    █████   ███████ 
-// 		██  ██ ██ ██    ██    ██    ██           ██ 
-// 		██   ████  ██████     ██    ███████ ███████ 
-//
-////////////////////////////////////////////////////////////////////////////////
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   edit.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: jobenass <jobenass@student.42lyon.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/02/18 08:03:02 by jobenass          #+#    #+#             */
+/*   Updated: 2021/03/14 11:23:15 by jobenass         ###   ########lyon.fr   */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "../../incs/minishell.h"
 
-static int	ft_is_escaped(char *str, int i, int quote)
+static int	ft_write_expand(char **token, char *old, int *out, char **env)
 {
-	if (quote == '\0' && str[i] == '\\')
-		return (1);
-	if (quote == '\"' && str[i] == '\\'
-	&& str[i + 1] && str[i + 1] == '\\')
-		return (1);
-	if (quote == '\"' && str[i] == '\\'
-	&& str[i + 1] && str[i + 1] == '\"')
-		return (1);
-	return (0);
-}
-
-static int	ft_delete_quote(char *str, int i, int quote)
-{
-	if (i == 0 && quote != '\0')
-		return (1);
-	else if (i > 0 && quote == '\0' 
-	&& str[i - 1] != '\\' && (str[i] == '\'' || str[i] == '\"'))
-		return (1);
-	if (i > 0 && quote != '\0'
-	&& str[i - 1] != '\\' && str[i] == quote)
-		return (1);
-	return (0);
-}
-
-static void ft_write_new_token(char **token, char *old)
-{
-	int		quote;
+	char	*key;
+	char	*content;
+	int		index;
 	int		in;
-	int		out;
+
+	index = 0;
+	while (old && old[index] && ft_is_charset(old, index) == 1
+	&& old[0] != '?')
+		index++;
+	if (index == 0 && old[0] == '?')
+		index = 1;
+	if (!(key = ft_strdup_idx(old, index)))
+		return (EXIT_ERROR);
+	content = ft_get_env(env, key);
+	ft_strdel(&key);
+	in = 0;
+	while (content && content[in])
+	{
+		if (ft_is_backslashed(content, in, '\0') == 0)
+			(*token)[(*out)++] = content[in];
+		in++;
+	}
+	return (index);
+}
+
+static int	ft_length_expand(char *token, int *length, char **env)
+{
+	char	*key;
+	char	*content;
+	int		index;
+	int		in;
+
+	index = 0;
+	while (token && token[index] && ft_is_charset(token, index) == 1
+	&& token[0] != '?')
+		index++;
+	if (index == 0 && token[0] == '?')
+		index = 1;
+	if (!(key = ft_strdup_idx(token, index)))
+		return (EXIT_ERROR);
+	content = ft_get_env(env, key);
+	ft_strdel(&key);
+	in = 0;
+	while (content && content[in])
+	{
+		if (ft_is_backslashed(content, in, '\0') == 0)
+			(*length)++;
+		in++;
+	}
+	return (index);
+}
+
+static int	ft_write_edit(char **token, char *old, char **env)
+{
+	int			quote;
+	int			in;
+	int			out;
 
 	quote = '\0';
 	in = 0;
 	out = 0;
-	while (old && old[in])
+	while (old && old[in] && errno == 0)
 	{
-		quote = ft_is_quote(old, in, quote);
-		in += ft_delete_quote(old, in, quote);
-		in += ft_is_escaped(old, in, quote);
-		(*token)[out++] = old[in++];
+		if (ft_is_quoted(old, in, &quote) == 0
+		&& ft_is_backslashed(old, in, quote) == 0)
+		{
+			if (ft_is_variable(old, in, quote) == 1)
+				in += ft_write_expand(token, &old[in + 1], &out, env);
+			else
+				(*token)[out++] = old[in];
+		}
+		in++;
 	}
-	(*token)[out] = old[in];
+	if (errno != 0)
+		return (EXIT_ERROR);
+	(*token)[out] = '\0';
+	return (EXIT_SUCCESS);
 }
 
-static int	ft_length_new_token(char *token)
+static int	ft_length_edit(char *token, char **env)
 {
-	int		quote;
 	int		length;
+	int		quote;
 	int		index;
 
+	length = ft_is_empty(token);
 	quote = '\0';
-	length = 0;
 	index = 0;
-	while (token && token[index])
+	while (token && token[index] && errno == 0)
 	{
-		quote = ft_is_quote(token, index, quote);
-		length += ft_delete_quote(token, index, quote);
-		length += ft_is_escaped(token, index, quote);
+		if (ft_is_quoted(token, index, &quote) == 0
+		&& ft_is_backslashed(token, index, quote) == 0)
+		{
+			if (ft_is_variable(token, index, quote) == 1)
+				index += ft_length_expand(&token[index + 1], &length, env);
+			else
+				length++;
+		}
 		index++;
 	}
-	index -= length;
-	if (index <= 0)
-		index = 0;
-	return (index);
+	if (errno != 0)
+		return (-1);
+	return (length);
 }
 
-int			ft_edit_token(char **token)
+int			ft_edit_token(char **token, char **env)
 {
 	char	*tmp;
 	int		length;
-	int		index;
 
-	length = 0;
-	index = -1;
-	while (token && token[++index])
+	if ((length = ft_length_edit(*token, env)) == -1)
+		return (EXIT_ERROR);
+	tmp = *token;
+	if ((*token = ft_strnew(length)) == NULL)
 	{
-		length = ft_length_new_token(token[index]);
-		tmp = token[index];
-		token[index] = ft_strnew(length);
-		if (!token[index])
-			return (EXIT_FAILURE);
-		if (length > 0)
-			ft_write_new_token(&token[index], tmp);
-		ft_strdel(&tmp);
+		*token = tmp;
+		return (EXIT_ERROR);
 	}
+	if ((ft_write_edit(token, tmp, env)) == EXIT_ERROR)
+	{
+		ft_strdel(&tmp);
+		return (EXIT_ERROR);
+	}
+	ft_strdel(&tmp);
+	if (length == 0)
+		ft_strdel(token);
 	return (EXIT_SUCCESS);
 }

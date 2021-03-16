@@ -1,19 +1,18 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-// 		███    ██  ██████  ████████ ███████ ███████ 
-// 		████   ██ ██    ██    ██    ██      ██      
-// 		██ ██  ██ ██    ██    ██    █████   ███████ 
-// 		██  ██ ██ ██    ██    ██    ██           ██ 
-// 		██   ████  ██████     ██    ███████ ███████ 
-//
-//		Manque la gestion de $?
-//		Doit set errno??
-//
-////////////////////////////////////////////////////////////////////////////////
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   exit.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ninieddu <ninieddu@student.42lyon.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/02/18 08:01:13 by jobenass          #+#    #+#             */
+/*   Updated: 2021/03/14 21:28:30 by ninieddu         ###   ########lyon.fr   */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "../../incs/minishell.h"
 
-int		ft_get_last_ret(char *s1)
+int			ft_get_last_ret(char *s1)
 {
 	int		len;
 	int		i;
@@ -25,7 +24,7 @@ int		ft_get_last_ret(char *s1)
 	x = 0;
 	len = ft_strlen(s1);
 	if (!(dup = (char *)ft_calloc(len + 1, sizeof(char))))
-		return (EXIT_FAILURE);
+		return (EXIT_ERROR);
 	while (s1[i] && i < len)
 	{
 		dup[x] = s1[i];
@@ -38,46 +37,52 @@ int		ft_get_last_ret(char *s1)
 	return (x);
 }
 
-int		ft_exit(t_mini *shl, int ret)
+int			ft_is_big_exit(char *args)
 {
-	int i;
+	char		*max;
+	size_t		index;
 
-	ft_putendl("exit");
-	i = -1;
-	if (!shl->psr->arguments[1])
+	index = -1;
+	max = "9223372036854775807";
+	if (args && args[0] == '-')
 	{
-		while (shl->env && shl->env[++i])
-			if (ft_strncmp(shl->env[i], "?=", 2) == 0)
-				ret = ft_get_last_ret(shl->env[i]);
+		max = "-9223372036854775808";
+		index++;
 	}
-	if (ft_is_first_time(shl) == 0)
+	if (args && ft_strlen(args) >= 21 + index)
+		return (1);
+	if (args && (ft_strlen(args) == 20 + index))
 	{
-		ft_tabstrdel(&shl->psr->arguments);
-		free(shl->psr);
-		ft_clean_general(&shl);
-		exit (ret);
+		while (args[++index] && max[index])
+		{
+			if ((args[index] - 48) > (max[index] - 48))
+				return (1);
+		}
 	}
-	shl->exit = 1;
-	return (ret);
+	return (0);
 }
 
-static int	ft_is_exit(char **args)
+static int	ft_is_exit(char **args, int index)
 {
-	int		index;
-
-	if (args[0] && args[1] && args[2])
+	if (args[0] && args[1] && args[2] && ft_isdigit(args[1][0]) == 1)
 	{
-		ft_error("exit", "Too many arguments");
-		return (1); //	retourne 1
+		ft_error("exit", NULL, "too many arguments", 0);
+		return (257);
 	}
-	index = 0;
-	while (args[1] && args[1][index]
-	&& (args[1][0] == '-' || ft_isdigit(args[1][index]) == 1))
+	if (args[1] && args[1][0] == '-')
 		index++;
-	if (args[1] && args[1][index])
+	if ((args[1] && (ft_isdigit(args[1][index]) == 0 || args[1][index] == 0)))
 	{
-		ft_error("exit", "Numeric argument required");
-		return (255);	//	retourne 255
+		ft_error("exit", args[1], "numeric argument required", 0);
+		return (255);
+	}
+	while (args[1] && args[1][index]
+	&& (ft_isdigit(args[1][index]) == 1))
+		index++;
+	if ((args[1] && args[1][index]) || ft_is_big_exit(args[1]) == 1)
+	{
+		ft_error("exit", args[1], "numeric argument required", 0);
+		return (255);
 	}
 	return (EXIT_SUCCESS);
 }
@@ -87,8 +92,8 @@ static int	ft_manage_value(int value)
 	if (value > 0)
 		while (value > 0 && (value - 256) >= 0)
 			value -= 256;
-	else if (value < 0 &&  value > -256)
-		while (value < 0  && value > -256 && (value + 256) >= 0)
+	else if (value < 0 && value > -256)
+		while (value < 0 && value > -256 && (value + 256) >= 0)
 			value += 256;
 	else if (value < -256)
 		while ((value) < 0)
@@ -96,13 +101,13 @@ static int	ft_manage_value(int value)
 	return (value);
 }
 
-int		ft_cmd_exit(char **args)
+int			ft_cmd_exit(char **args)
 {
 	int		value;
-	
-	if ((value = ft_is_exit(args)) != EXIT_SUCCESS)
+
+	if ((value = ft_is_exit(args, 0)) != EXIT_SUCCESS)
 		return (value);
-	if (args[1] && ft_strlen(args[1]) < 9)
+	if (args[1])
 	{
 		value = ft_atoi(args[1]);
 		value = ft_manage_value(value);

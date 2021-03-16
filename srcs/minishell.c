@@ -6,51 +6,38 @@
 /*   By: ninieddu <ninieddu@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/06 16:59:44 by jobenass          #+#    #+#             */
-/*   Updated: 2021/01/20 15:45:04 by ninieddu         ###   ########lyon.fr   */
+/*   Updated: 2021/03/15 22:15:59 by ninieddu         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../incs/minishell.h"
 
+pid_t	g_pid = -1;
+
 static int	ft_set_required(t_mini **shl, char **envp)
 {
-	int		i;
-
 	if (!(*shl = malloc(sizeof(t_mini))))
-		return (EXIT_FAILURE);
+		return (EXIT_ERROR);
 	ft_bzero(*shl, sizeof(t_mini));
-	if (!((*shl)->env = malloc(sizeof(char *) * (ft_tabstrlen(envp) + 2))))
-		return (EXIT_FAILURE);
-	i = -1;
-	while (envp && envp[++i])
-	{
-		if (ft_strcmp_chr(envp[i], "SHLVL=", '=') == 0)
-			(*shl)->env[i] = ft_manage_shlvl(envp[i]);
-		else
-			(*shl)->env[i] = ft_strdup(envp[i]);
-		if (!(*shl)->env[i])
-			return (EXIT_FAILURE);
-	}
-	if (ft_is_first_time(**&shl) == 1)
-	{
-		(*shl)->env[i] = ft_strjoin("?=", "0");
-		if (!(*shl)->env[i])
-			return (EXIT_FAILURE);
-	}
-	(*shl)->env[++i] = NULL;
+	if (ft_get_home(*shl) == EXIT_ERROR
+	|| ft_set_variables(*shl, envp) == EXIT_ERROR
+	|| ft_update_variables((*shl)->env) == EXIT_ERROR)
+		return (EXIT_ERROR);
+	(*shl)->subminishell = 0;
 	return (EXIT_SUCCESS);
 }
 
-void		ft_clean_general(t_mini **shl)
+void		ft_general_clean(t_mini **shl)
 {
 	if (!*shl)
 		return ;
+	ft_strdel(&(*shl)->home);
 	ft_tabstrdel(&(*shl)->env);
 	free(*shl);
 	*shl = NULL;
 }
 
-char	*ft_get_input(int fd, char *line)
+char		*ft_get_input(int fd, char *line)
 {
 	char	buff[2];
 	char	*tmp;
@@ -65,12 +52,9 @@ char	*ft_get_input(int fd, char *line)
 				break ;
 			continue ;
 		}
-		if (!(line = ft_strjoin((line ? line : ""), \
-			(*buff == '\n' ? "" : buff))))
-		{
-			ft_error("malloc", NULL);
-			*buff = '\n';
-		}
+		if (!(line = ft_strjoin((line ? line : "\0"), \
+			(*buff == '\n' ? "\0" : buff))))
+			return (NULL);
 		if (tmp)
 			free(tmp);
 		if (*buff == '\n')
@@ -81,19 +65,11 @@ char	*ft_get_input(int fd, char *line)
 
 void		ft_prompt(void)
 {
-	char	*path;
-
-	path = NULL;
-	if ((path = getcwd(NULL, 0)))
-	{
-		ft_putstr_fd("minishell-42:~ ", 1);
-		ft_putstr_fd(path, 1);
-		ft_putstr_fd("$ ", 1);
-		free(path);
-	}
+	ft_putstr_fd("minishell-42", 1);
+	ft_putstr_fd("$ ", 1);
 }
 
-int			main(int argc, char**argv, char **envp)
+int			main(int argc, char **argv, char **envp)
 {
 	t_mini	*shl;
 	char	*input;
@@ -102,21 +78,22 @@ int			main(int argc, char**argv, char **envp)
 	shl = NULL;
 	input = NULL;
 	ret = ft_set_required(&shl, envp);
-	while (argc && argv && (ret != EXIT_FAILURE))
+	while (ret != EXIT_ERROR && argc && argv)
 	{
 		ft_signal_handler(1);
 		ft_prompt();
 		if (!(input = ft_get_input(0, NULL)))
-		{
-			ft_putendl_fd("exit", 1);
-			ft_strdel(&input);
-			ft_clean_general(&shl);
-			return (EXIT_SUCCESS);
-		}
+			return (ft_manage_ctrld(input, &shl));
+		ft_set_sign_ret(shl);
 		ret = ft_lexer(shl, input, ret);
+		ft_strdel(&input);
+		if (ft_set_others_ret(ret, input, shl) == EXIT_ERROR)
+			return (EXIT_ERROR);
 		if (shl->exit == 1)
 			break ;
 	}
-	ft_clean_general(&shl);
+	ft_general_clean(&shl);
+	if (ret == EXIT_ERROR)
+		ft_fatal_error();
 	return (ret);
 }

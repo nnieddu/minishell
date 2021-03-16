@@ -1,129 +1,100 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-// 		███    ██  ██████  ████████ ███████ ███████ 
-// 		████   ██ ██    ██    ██    ██      ██      
-// 		██ ██  ██ ██    ██    ██    █████   ███████ 
-// 		██  ██ ██ ██    ██    ██    ██           ██ 
-// 		██   ████  ██████     ██    ███████ ███████ 
-//
-//		ERREUR:
-//		"echo | ||" --> | et non ||
-//		"echo >   " --> near parse error et non être valide
-//
-////////////////////////////////////////////////////////////////////////////////
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   syntax.c                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ninieddu <ninieddu@student.42lyon.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/02/18 08:02:34 by jobenass          #+#    #+#             */
+/*   Updated: 2021/03/15 01:07:11 by ninieddu         ###   ########lyon.fr   */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "../../incs/minishell.h"
 
-static int	ft_is_control(char *input, int index)
+static int	ft_error_multiline(char *token, int quote)
 {
-	if ((index == 0 && input[index] == ';')
-	|| (index > 0 && input[index - 1] != '\\' && input[index] == ';'))
-		return (1);
-	if ((index == 0 && input[index] == '|')
-	|| (index > 0 && input[index - 1] != '\\' && input[index] == '|'))
-		return (1);
-	if ((index == 0 && input[index] == '&')
-	|| (index > 0 && input[index - 1] != '\\' && input[index] == '&'))
-		return (1);
-	if ((index == 0 && input[index] == '<')
-	|| (index > 0 && input[index - 1] != '\\' && input[index] == '<'))
-		return (1);
-	if ((index == 0 && input[index] == '>')
-	|| (index > 0 && input[index - 1] != '\\' && input[index] == '>'))
-		return (1);
-	return (0);
+	ft_putstr_fd("minishell: ", STDERR_FILENO);
+	ft_putstr_fd("syntax error unauthorized multiline token `", STDERR_FILENO);
+	if (token)
+		ft_putstr_fd(token, STDERR_FILENO);
+	else
+		ft_putchar_fd(quote, STDERR_FILENO);
+	ft_putstr_fd("'\n", STDERR_FILENO);
+	return (EXIT_FAILURE);
 }
 
-static int	ft_before_control(char *input, int index, int token, int quote)
+static int	ft_error_token(char *token)
 {
-	int		error;
+	ft_putstr_fd("minishell: ", STDERR_FILENO);
+	ft_putstr_fd("syntax error near unexpected token `", STDERR_FILENO);
+	if (token)
+		ft_putstr_fd(token, STDERR_FILENO);
+	else
+		ft_putstr_fd("newline", STDERR_FILENO);
+	ft_putstr_fd("'\n", STDERR_FILENO);
+	return (EXIT_FAILURE);
+}
 
-	error = 0;
-	if (token == 0 && quote == '\0' && ft_is_control(input, index) == 1)
+static int	ft_handle_error(char **token, int idx)
+{
+	if (ft_is_operator(token[idx]) == 1
+	&& (idx == 0 || (idx > 0 && ft_is_operator(token[idx - 1]) != 0)))
+		return (ft_error_token(token[idx]));
+	if (idx > 0 && ft_is_operator(token[idx]) == 1 && token[idx + 1]
+	&& ft_is_operator(token[idx + 1]) != 0 \
+		&& ft_is_operator(token[idx + 1]) != 5)
+		return (ft_error_token(token[idx + 1]));
+	if (ft_is_operator(token[idx]) == 2)
+		return (ft_error_token(token[idx]));
+	if (ft_is_operator(token[idx]) == 3)
+		return (ft_error_token(token[idx]));
+	if (idx > 0 && ft_is_operator(token[idx]) == 4 && token[idx + 1] == NULL)
+		return (ft_error_multiline(token[idx], '\0'));
+	if (ft_is_operator(token[idx]) == 4
+	&& (idx == 0 || (idx > 0 && ft_is_operator(token[idx - 1]) != 0)))
+		return (ft_error_token(token[idx]));
+	if (ft_is_operator(token[idx]) == 5 && token[idx + 1] == NULL)
+		return (ft_error_token(NULL));
+	if (ft_is_operator(token[idx]) == 5 && ft_is_operator(token[idx + 1]) != 0)
+		return (ft_error_token(token[idx + 1]));
+	if (ft_is_operator(token[idx]) == 6)
+		return (ft_error_token(token[idx]));
+	return (EXIT_SUCCESS);
+}
+
+int			ft_check_tokens(t_mini *shl, char **line)
+{
+	char	**token;
+	int		index;
+	int		ret;
+
+	if ((token = ft_get_token(*line)) == NULL)
+		return (EXIT_ERROR);
+	ret = EXIT_SUCCESS;
+	index = 0;
+	while (ret == EXIT_SUCCESS && token && token[index])
 	{
-		if (input[index] == '<' || input[index] == '>')
-			ft_putstr("syntax error near unexpected token `newline");
-		else
-		{
-			ft_putstr("syntax error near unexpected token `");
-			ft_putchar(input[index]);
-			if (input[index + 1] && ft_is_control(input, index + 1) == 1)
-				ft_putchar(input[index + 1]);
-		}
-		ft_putstr("'\n");
-		error = 1;
+		ret = ft_handle_error(token, index);
+		index++;
 	}
-	return(error);
-}
-
-static int	ft_after_control(char *input, int control, int quote)
-{
-	int		error;
-
-	error = 0;
-	if (quote == '\0' && control != 0)
+	ft_tabstrdel(&token);
+	if (ret != EXIT_SUCCESS)
 	{
-		if (input[control] == '<' || input[control] == '>')
-			ft_putstr("syntax error near unexpected token `newline");
-		else
-		{
-			ft_putstr("syntax error unauthorized multiline token `");
-			ft_putchar(input[control]);
-			if (control > 0 && ft_is_control(input, control - 1) == 1)
-				ft_putchar(input[control - 1]);
-		}
-		ft_putstr("'\n");
-		error = 1;
+		ft_strdel(line);
+		ft_clean_lexer(&shl->lxr);
 	}
-	else if (quote == '\'')
-		ft_putstr("syntax error unauthorized multiline token `\''\n");
-	else if (quote == '\"')
-		ft_putstr("syntax error unauthorized multiline token `\"'\n");
-	if (quote == '\'' || quote == '\"')
-		error = 1;
-	return(error);
+	return (ret == EXIT_SUCCESS ? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
-static int	ft_last_control(char *input, int index, int quote, int *token)
-{
-	if (quote == '\0' && ft_is_token(input[index]) == 1
-	&& ft_is_control(input, index) == 1 && input[index] != ';')
-		return (index);
-	if (quote == '\0' && ft_is_token(input[index]) == 1
-	&& ft_is_control(input, index) == 0)
-	{
-		*token = ft_is_token(input[index]);
-		return(0);
-	}
-	if (quote == '\0' && ft_is_token(input[index]) == 0
-	&& ft_is_control(input, index) == 1)
-		return(index);
-	return (0);
-}
-
-int		ft_check_syntax(char *input)
+int			ft_check_quotes(char *input)
 {
 	int		quote;
-	int		token;
-	char	control;
 	int		index;
 
 	quote = '\0';
-	token = 0;
-	control = '\0';
-	index = 0;
-	while (input[index])
-	{
+	index = -1;
+	while (input[++index])
 		quote = ft_is_quote(input, index, quote);
-		control = ft_last_control(input, index, quote, &token);
-		if (token == 0 && ft_is_control(input, index) == 1)
-			break ;
-		if (quote == '\0' && input[index] == ';')
-			token = 0;
-		index++;
-	}
-	if (ft_before_control(input, index, token, quote) == 1
-	|| ft_after_control(input, control, quote) == 1)
-		return (EXIT_FAILURE);
-	return(EXIT_SUCCESS);
+	return (quote == '\0' ? EXIT_SUCCESS : ft_error_multiline(NULL, quote));
 }

@@ -1,28 +1,42 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-// 		███    ██  ██████  ████████ ███████ ███████ 
-// 		████   ██ ██    ██    ██    ██      ██      
-// 		██ ██  ██ ██    ██    ██    █████   ███████ 
-// 		██  ██ ██ ██    ██    ██    ██           ██ 
-// 		██   ████  ██████     ██    ███████ ███████ 
-//
-//		Doit afficher les " et pas \" dans "test\""
-//
-////////////////////////////////////////////////////////////////////////////////
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   echo.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: jobenass <jobenass@student.42lyon.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/02/18 08:01:04 by jobenass          #+#    #+#             */
+/*   Updated: 2021/03/02 08:39:39 by jobenass         ###   ########lyon.fr   */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "../../incs/minishell.h"
 
-int		ft_cmd_echo(char **args, int out)
+static int	ft_is_options(char *arg)
+{
+	int		i;
+
+	i = 1;
+	while (arg && arg[i] && arg[i] == 'n')
+		i++;
+	if (arg[i] == '\0')
+		return (1);
+	return (0);
+}
+
+int			ft_cmd_echo(char **args, int out)
 {
 	int		nonewline;
 	int		index;
 
 	nonewline = 0;
 	index = 1;
-	if (args[index] && ft_strcmp(args[index], "-n") == 0)
-		nonewline = 1;
-	if (nonewline == 1)
+	while (args[index] && ft_strncmp(args[index], "-n", 2) == 0
+	&& ft_is_options(args[index]) == 1)
+	{
 		index++;
+		nonewline = 1;
+	}
 	while (args && args[index])
 	{
 		ft_putstr_fd(args[index], out);
@@ -33,5 +47,5 @@ int		ft_cmd_echo(char **args, int out)
 	}
 	if (nonewline != 1)
 		ft_putchar_fd('\n', out);
-	return (ft_error("echo", NULL));
+	return (EXIT_SUCCESS);
 }

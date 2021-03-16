@@ -3,16 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   ft_strdup_idx.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jobenass <jobenass@student.42lyon.fr>      +#+  +:+       +#+        */
+/*   By: ninieddu <ninieddu@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/10/14 10:01:28 by jobenass          #+#    #+#             */
-/*   Updated: 2020/11/28 14:16:40 by jobenass         ###   ########lyon.fr   */
+/*   Updated: 2021/02/18 10:47:17 by ninieddu         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft_update.h"
 
-char 	*ft_strdup_idx(const char *s1, int ind)
+char	*ft_strdup_idx(const char *s1, int ind)
 {
 	char	*res_dup;
 	int		j;

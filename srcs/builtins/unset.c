@@ -1,29 +1,16 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-// 		███    ██  ██████  ████████ ███████ ███████ 
-// 		████   ██ ██    ██    ██    ██      ██      
-// 		██ ██  ██ ██    ██    ██    █████   ███████ 
-// 		██  ██ ██ ██    ██    ██    ██           ██ 
-// 		██   ████  ██████     ██    ███████ ███████ 
-//
-////////////////////////////////////////////////////////////////////////////////
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   unset.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: jobenass <jobenass@student.42lyon.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/02/18 08:01:31 by jobenass          #+#    #+#             */
+/*   Updated: 2021/03/02 12:35:25 by jobenass         ###   ########lyon.fr   */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "../../incs/minishell.h"
-
-static int	ft_is_correct(char *args)
-{
-	int		index;
-
-	index = 1;
-	if (ft_isdigit(args[0]) == 1)
-		return (EXIT_FAILURE);
-	while (args && args[index]
-	&& (ft_isalnum(args[index]) == 1 || args[index] == '_'))
-		index++;
-	if (args[index])
-		return (EXIT_FAILURE);
-	return (EXIT_SUCCESS);
-}
 
 static char	**ft_rebuild_variables(char *var, char **envs)
 {
@@ -41,7 +28,7 @@ static char	**ft_rebuild_variables(char *var, char **envs)
 	out = 0;
 	while (envs[in])
 	{
-		if (ft_strcmp_chr(envs[in], var, '=') != 0
+		if (ft_found_variable(var, envs[in]) == 0
 		&& !(new[out++] = ft_strdup(envs[in])))
 		{
 			ft_tabstrdel(&new);
@@ -57,43 +44,41 @@ static char	**ft_rebuild_variables(char *var, char **envs)
 static int	ft_delete(char *key, char ***envs)
 {
 	int		index;
-	char	*del;
 	char	**new;
 
-	new = 0;
-
-	del = ft_strjoin(key, "=");
 	index = -1;
 	while ((*envs)[++index])
-		if (ft_strcmp_chr((*envs)[index], del, '=') == 0)
+		if (ft_found_variable(key, (*envs)[index]) == 1)
 			break ;
+	new = NULL;
 	if ((*envs)[index])
 	{
-		new = ft_rebuild_variables(del, *envs);
+		new = ft_rebuild_variables(key, *envs);
+		if (!new)
+			return (EXIT_ERROR);
 		ft_tabstrdel(envs);
 		*envs = new;
 	}
-	ft_strdel(&del);
 	return (*envs != NULL ? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
 int			ft_cmd_unset(char **args, char ***envs)
 {
 	int		index;
-	int		error;
+	int		ret;
 
-	error = 0;
 	index = 1;
+	ret = EXIT_SUCCESS;
 	while (args[index])
 	{
-		if ((error = ft_is_correct(args[index])) == EXIT_SUCCESS)
+		if (ft_is_identifier(args[index]) == EXIT_SUCCESS)
 		{
-			if (ft_delete(args[index], envs) == EXIT_FAILURE)
-				return (EXIT_FAILURE);
+			if (ft_delete(args[index], envs) == EXIT_ERROR)
+				return (EXIT_ERROR);
 		}
 		else
-			return (ft_error("unset", "Not a valid identifier"));
+			ret = ft_error("unset", args[index], "not a valid identifier", 1);
 		index++;
 	}
-	return (ft_error("unset", NULL));
+	return (ret);
 }

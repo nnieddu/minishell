@@ -1,15 +1,14 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-// 		███    ██  ██████  ████████ ███████ ███████ 
-// 		████   ██ ██    ██    ██    ██      ██      
-// 		██ ██  ██ ██    ██    ██    █████   ███████ 
-// 		██  ██ ██ ██    ██    ██    ██           ██ 
-// 		██   ████  ██████     ██    ███████ ███████ 
-//
-//		INFO: (gérer les petits cas de merde)
-//			bin/cat < Z/write
-//
-////////////////////////////////////////////////////////////////////////////////
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   browse.c                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: jobenass <jobenass@student.42lyon.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/02/18 08:06:25 by jobenass          #+#    #+#             */
+/*   Updated: 2021/03/03 16:50:28 by jobenass         ###   ########lyon.fr   */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "../../incs/minishell.h"
 
@@ -59,7 +58,7 @@ static char	*ft_add_parts(char *input, int *length, char **path)
 	char	*tmp;
 
 	if (input[*length] == '/')
-			(*length)++;
+		(*length)++;
 	if (!*path && !(*path = ft_strdup("")))
 		return (NULL);
 	tmp = *path;
@@ -87,6 +86,8 @@ int			ft_browse_redirection(char *operand, char *input)
 			break ;
 		ft_access_directory(path);
 	}
+	if (!path)
+		path = ft_strdup("");
 	if (errno == 0)
 		file = ft_access_file(operand, path);
 	ft_strdel(&path);

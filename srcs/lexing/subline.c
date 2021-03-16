@@ -1,12 +1,14 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-// 		███    ██  ██████  ████████ ███████ ███████ 
-// 		████   ██ ██    ██    ██    ██      ██      
-// 		██ ██  ██ ██    ██    ██    █████   ███████ 
-// 		██  ██ ██ ██    ██    ██    ██           ██ 
-// 		██   ████  ██████     ██    ███████ ███████ 
-//
-////////////////////////////////////////////////////////////////////////////////
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   subline.c                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: jobenass <jobenass@student.42lyon.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/02/18 08:02:29 by jobenass          #+#    #+#             */
+/*   Updated: 2021/02/18 08:14:33 by jobenass         ###   ########lyon.fr   */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "../../incs/minishell.h"
 
@@ -14,9 +16,8 @@ static int	ft_append_list(char *subline, t_list **list)
 {
 	t_list	*item;
 
-	item = ft_create_item(subline);
-	if (!item)
-		return (EXIT_FAILURE);
+	if (!(item = ft_create_item(subline)))
+		return (EXIT_ERROR);
 	ft_add_item(list, item);
 	return (EXIT_SUCCESS);
 }
@@ -53,17 +54,17 @@ static int	ft_collect_subline(t_list **list, char *line)
 	int		start;
 	int		end;
 
-	subline = 0;
+	subline = NULL;
 	start = 0;
 	while (line[start])
 	{
 		end = ft_length_subline(line, start);
 		if (!(subline = ft_extract_subline(&line[start], end)))
-			return (EXIT_FAILURE);
-		if (ft_append_list(subline, list) == EXIT_FAILURE)
+			return (EXIT_ERROR);
+		if (ft_append_list(subline, list) == EXIT_ERROR)
 		{
 			ft_strdel(&subline);
-			return (EXIT_FAILURE);
+			return (EXIT_ERROR);
 		}
 		ft_strdel(&subline);
 		while (line[start + end] == ';')
@@ -81,14 +82,13 @@ char		**ft_get_subline(char *line)
 
 	if (!line)
 		return (NULL);
-	list = 0;
-	error = ft_collect_subline(&list, line);
-	if (error == EXIT_FAILURE)
+	list = NULL;
+	if ((error = ft_collect_subline(&list, line)) == EXIT_ERROR
+	|| !(subline = ft_list_to_tab(list)))
 	{
 		ft_clean_list(&list);
 		return (NULL);
 	}
-	subline = ft_list_to_tab(list);
 	ft_clean_list(&list);
 	return (subline);
 }

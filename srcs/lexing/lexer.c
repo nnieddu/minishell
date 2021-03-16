@@ -1,16 +1,18 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-// 		███    ██  ██████  ████████ ███████ ███████ 
-// 		████   ██ ██    ██    ██    ██      ██      
-// 		██ ██  ██ ██    ██    ██    █████   ███████ 
-// 		██  ██ ██ ██    ██    ██    ██           ██ 
-// 		██   ████  ██████     ██    ███████ ███████ 
-//
-////////////////////////////////////////////////////////////////////////////////
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   lexer.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ninieddu <ninieddu@student.42lyon.fr>      +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/02/18 08:02:20 by jobenass          #+#    #+#             */
+/*   Updated: 2021/03/15 18:08:37 by ninieddu         ###   ########lyon.fr   */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "../../incs/minishell.h"
 
-void		ft_clean_lexer(t_lexer **lxr)
+void	ft_clean_lexer(t_lexer **lxr)
 {
 	if (!*lxr)
 		return ;
@@ -21,37 +23,47 @@ void		ft_clean_lexer(t_lexer **lxr)
 	*lxr = NULL;
 }
 
-static int	ft_prepare_lexer(t_mini **shl, char *input)
+int		ft_prepare_lexer(t_mini **shl, char *input)
 {
-	(void)input; // ft_check_syntax
-	// if (ft_check_syntax(input) == EXIT_FAILURE)
-	//	return (EXIT_FAILURE);
+	if (ft_check_quotes(input) == EXIT_FAILURE)
+		return (256);
 	if (!((*shl)->lxr = malloc(sizeof(t_lexer))))
-		return (EXIT_FAILURE);
+		return (EXIT_ERROR);
 	ft_bzero((*shl)->lxr, sizeof(t_lexer));
 	return (EXIT_SUCCESS);
 }
 
-int			ft_lexer(t_mini *shl, char *input, int ret)
+int		ft_is_exit_with_pipe(t_mini *shl)
 {
-	int		i;
+	if (ft_strcmp(shl->lxr->token[0], "exit") == 0 && \
+	(!shl->lxr->token[1] || ft_strcmp(shl->lxr->token[1], "|") != 0))
+		return (1);
+	return (0);
+}
 
-	if (ft_prepare_lexer(&shl, input) == EXIT_FAILURE)
-		return(EXIT_FAILURE);
+int		ft_lexer(t_mini *shl, char *input, int ret)
+{
+	int	i;
+
+	if ((ret = ft_prepare_lexer(&shl, input)) != EXIT_SUCCESS)
+		return (ret);
 	shl->lxr->line = ft_get_line(input);
-	ft_strdel(&input);
+	if ((ret = ft_check_tokens(shl, &shl->lxr->line)) != EXIT_SUCCESS)
+		return (258);
 	shl->lxr->subline = ft_get_subline(shl->lxr->line);
 	if (!shl->lxr->line || !shl->lxr->subline)
-		return(EXIT_FAILURE);
+		ret = EXIT_ERROR;
 	ft_strdel(&(shl->lxr)->line);
-	ret = EXIT_SUCCESS;
 	i = -1;
-	while (shl->lxr->subline && shl->lxr->subline[++i] && ret != EXIT_FAILURE)
+	while (ret != EXIT_ERROR && shl->lxr->subline && shl->lxr->subline[++i])
 	{
 		if (!(shl->lxr->token = ft_get_token(shl->lxr->subline[i])))
-			ret = EXIT_FAILURE;
-		if (ret != EXIT_FAILURE)
-			ret = ft_parser(shl, ret);
+			ret = EXIT_ERROR;
+		if (ret != EXIT_ERROR)
+			ret = ft_parser(shl, ret, 0);
+		if (ft_is_exit_with_pipe(shl) == 1 || ret == 130)
+			break ;
+		ret = 0;
 		ft_tabstrdel(&(shl->lxr)->token);
 	}
 	ft_clean_lexer(&shl->lxr);

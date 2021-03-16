@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ninieddu <ninieddu@student.le-101.fr>      +#+  +:+       +#+        */
+/*   By: jobenass <jobenass@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/10/28 16:50:03 by jobenass          #+#    #+#             */
-/*   Updated: 2021/01/06 21:26:54 by ninieddu         ###   ########lyon.fr   */
+/*   Updated: 2021/02/18 08:15:26 by jobenass         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,7 +72,7 @@ int				get_next_line(int fd, char **line)
 	char			*buff;
 	int				pad;
 	static char		*rest;
-	
+
 	if (ft_check_params(fd, line, &rest) == -1)
 		return (-1);
 	if (rest && ((pad = ft_process(line, &rest, 0, 1))) && pad != 0)
