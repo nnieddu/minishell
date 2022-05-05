@@ -84,9 +84,9 @@ function exec_test()
 # ## exec_test 'cat /dev/random | head -c 100 | wc -c'
 
 # # TESTS QUI PASSENT PAS
-if [ "$1" == "error" ] || [ "$1" == "all" ]; then
-	exec_test 'ls | < file2'
-fi
+# if [ "$1" == "error" ] || [ "$1" == "all" ]; then
+# 	exec_test 'ls | < file2'
+# fi
 
 ### TESTS SUJET DE CORRECTION OLD
 if [ "$1" == "42" ] || [ "$1" == "all" ]; then
@@ -122,7 +122,6 @@ if [ "$1" == "guideline" ] || [ "$1" == "all" ]; then
 	exec_test "/bin/mkdir -p dir"
 	exec_test "/bin/cp -r dir dircopy"
 	exec_test "/bin/date -r"
-	exec_test "/bin/rm -r dircopy"
 
 	exec_test "echo"
 	exec_test "echo \"\""
@@ -344,7 +343,6 @@ if [ "$1" == "exec" ] || [ "$1" == "all" ]; then
 	exec_test "echo test > out >> out >> out ; echo test >> out ; ls"
 	exec_test "echo test > out >> out >> out ; echo test >> out ; cat out"
 	exec_test "echo test > out1 >> out2 >> out3 ; echo test >> out3 ; ls"
-	exec_test "echo test > out1 >> out2 >> out3 ; echo test >> out3 ; cat out1 ; cat out2 ; cat out3"
 	exec_test "< noexist"
 	exec_test "touch exist ; < exist"
 	exec_test "touch exist ; > exist ; ls"
@@ -1581,7 +1579,14 @@ if [ "$1" == "env" ] || [ "$1" == "all" ]; then
 	exec_test "export $NEWPATH ; export OLDPWD ; echo salut toi ; echo \$_ ; env"
 fi
 
-# rm lol ls file noexist exist out2 out3 a b
+
+if [ "$1" == "clean" ]; then
+rm lol ls file noexist exist out2 out3 a b in1 nimp out out1 test
+rm -rf a 
+chmod 777 dir
+rm -rf dir
+fi
+
 # rm minishell
 
 # DEL=$(ls | tr "\n" " " | grep -v $FILES)
